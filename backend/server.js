@@ -65,7 +65,7 @@ app.post('/evento', (req, res) => {
     return res.status(200).json({ message: 'Evento recebido com sucesso!' });
 });
 
-// Endpoint de notificação simples
+// Endpoint de notificação simples e
 app.post('/notificacao', (req, res) => {
     const payload = req.body;
 
