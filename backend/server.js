@@ -8,10 +8,10 @@ function generateToken() {
 }
 
 let tokens = {
-    id: 0, // Id que começa do 1 e assim por diante
+    id: 0,
     accessToken: generateToken(), // Gera o token inicial aleatório
     refreshToken: generateToken(), // Gera um refresh token aleatório
-    expireAt: new Date(Date.now() + 3600 * 1000) // Time que expira em 1 hora
+    expireAt: new Date(Date.now() + 3600 * 1000) // Expira em 1 hora
 };
 
 // Middleware para validar o header TenantId
@@ -94,7 +94,7 @@ app.post('/evento-resposta', (req, res) => {
     return res.status(200).json({ message: 'Resposta do evento recebida com sucesso!' });
 });
 
-// Inicia o servidor na porta 3000
+// Inicia o servidor na poeta 3000
 app.listen(3000, ()=>{
     console.log('API rodando na porta 3000');
 });
