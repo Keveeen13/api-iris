@@ -81,15 +81,18 @@ app.post('/notificacao', (req, res) => {
 
 // Recebimento de post evento
 app.post('/evento-resposta', (req, res) => {
-    const { Cliente, IdCliente, IdChamado, NomeRespondeu, TelefoneRespondeu, OpcaoEscolhida } = req.body;
+    const { Cliente, IdCliente, IdChamado, NomeRespondeu, TelefoneRespondeu, OpcaoEscolhida, TenantId, Telefones, menu } = req.body;
 
     console.log(`Resposta do evento:
-      Cliente: ${Cliente},
-      IdCliente: ${IdCliente},
-      IdChamado: ${IdChamado},
-      NomeRespondeu: ${NomeRespondeu},
-      TelefoneRespondeu: ${TelefoneRespondeu},
-      OpcaoEscolhida: ${OpcaoEscolhida}`);
+        TenantId: ${TenantId},
+        Cliente: ${Cliente},
+        IdCliente: ${IdCliente},
+        IdChamado: ${IdChamado},
+        NomeRespondeu: ${NomeRespondeu},
+        TelefoneRespondeu: ${TelefoneRespondeu},
+        OpcaoEscolhida: ${OpcaoEscolhida}
+        Telefones: ${JSON.stringify(Telefones)},
+        Menu: ${JSON.stringify(menu)}`);
 
     return res.status(200).json({ message: 'Resposta do evento recebida com sucesso!' });
 });
