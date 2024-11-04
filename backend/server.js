@@ -1,6 +1,7 @@
 const express = require('express');
 const crypto = require('crypto');
 const app = express();
+const ngrok = require('ngrok');""
 app.use(express.json());
 
 function generateToken() {
@@ -98,6 +99,13 @@ app.post('/evento-resposta', (req, res) => {
 });
 
 // Inicia o servidor na poeta 3000
-app.listen(3000, ()=>{
+app.listen(3000, async ()=>{
     console.log('API rodando na porta 3000');
+
+    try {
+        const url = await ngrok.connect(3000);
+        console.log(`Ngrok ativo: ${url}`);
+      } catch (error) {
+        console.error('Erro ao iniciar o Ngrok:', error);
+      }
 });
