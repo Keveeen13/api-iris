@@ -1,7 +1,7 @@
 const express = require('express');
 const crypto = require('crypto');
 const app = express();
-const ngrok = require('ngrok');""
+const ngrok = require('ngrok');
 app.use(express.json());
 
 function generateToken() {
