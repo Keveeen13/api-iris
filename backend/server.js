@@ -1,18 +1,51 @@
 const express = require('express');
 const crypto = require('crypto');
-const app = express();
+const qrcode = require('qrcode-terminal');
+const { Client } = require('whatsapp-web.js');
+const puppeteer = require('puppeteer-core');
+const path = require('path');
 const ngrok = require('ngrok');
+const app = express();
 app.use(express.json());
 
+// Função para gerar token
 function generateToken() {
     return crypto.randomBytes(20).toString('hex'); // Gera um token de 40 caracteres
 }
 
+// Configuração para armazenamento de sessão
+let sessionData;
+
+// Configuração do cliente WhatsApp
+const client = new Client({
+    puppeteer: {
+        executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+    },
+    session: sessionData // Carrega ou cria a sessão se necessário
+});
+
+client.on('qr', (qr) => {
+    // Exibe o QR code no terminal para autenticação
+    qrcode.generate(qr, { small: true });
+});
+
+client.on('auth_failure', (msg) => {
+    console.error('Falha na autenticação:', msg);
+});
+
+client.on('ready', () => {
+    console.log('WhatsApp Web conectado!');
+});
+
+// Inicia o cliente do WhatsApp Web
+client.initialize();
+
+// Armazenamento de tokens
 let tokens = {
     id: 0,
-    accessToken: generateToken(), // Gera o token inicial aleatório
-    refreshToken: generateToken(), // Gera um refresh token aleatório
-    expireAt: new Date(Date.now() + 3600 * 1000) // Expira em 1 hora
+    accessToken: generateToken(),
+    refreshToken: generateToken(),
+    expireAt: new Date(Date.now() + 3600 * 1000)
 };
 
 // Middleware para validar o header TenantId
@@ -21,7 +54,6 @@ app.use((req, res, next) => {
     if (!tenantId) {
         return res.status(400).json({ error: 'TenantId é obrigatório no header' });
     }
-    // Validação de TenantId, pode ser expandida para verificar no banco de dados, etc.
     console.log(`Requisição feita com TenantId: ${tenantId}`);
     next();
 });
@@ -47,20 +79,43 @@ app.post('/login', (req, res) => {
     }
 });
 
-// EndPoint de eventos (payload de controle de horário)
+// Endpoint para enviar mensagem no WhatsApp    
+app.post('/mensagem', (req, res) => {
+    const { message, telefone } = req.body;
+
+    if (!message || !telefone) {
+        return res.status(400).json({ error: 'Dados da notificação incompletos' });
+    }
+
+    const numeroComCodigo = `55${telefone}@c.us`;
+
+    // Verifica se o cliente está pronto antes de enviar a mensagem
+    if (client.readyState === 'CONNECTED') {
+        client.sendMessage(numeroComCodigo, message)
+            .then(response => {
+                console.log('Mensagem enviada com sucesso para', telefone);
+                res.status(200).json({ message: 'Mensagem enviada com sucesso!' });
+            })
+            .catch(err => {
+                console.error('Erro ao enviar mensagem:', err);
+                res.status(500).json({ error: 'Erro ao enviar mensagem' });
+            });
+    } else {
+        res.status(500).json({ error: 'Cliente WhatsApp não está pronto para enviar mensagens.' });
+    }
+});
+
+// Endpoint de eventos (payload de controle de horário)
 app.post('/evento', (req, res) => {
     const { Cliente, IdCliente, IdChamado, NomeRespondeu, TelefoneRespondeu, OpcaoEscolhida } = req.body;
 
-    // Log para verificar o payload recebido
     console.log('Payload recebido:', req.body);
 
-    // Verifica se todos os campos obrigatórios estão presentes e não são os valores placeholders (ex: 'string', 0)
     if (Cliente === 'string' || IdCliente === 0 || IdChamado === 0 || NomeRespondeu === 'string' || TelefoneRespondeu === 'string' || OpcaoEscolhida === 'string') {
         console.log('Dados inválidos detectados: ', { Cliente, IdCliente, IdChamado, NomeRespondeu, TelefoneRespondeu, OpcaoEscolhida });
         return res.status(400).json({ error: 'Dados do evento são inválidos ou placeholders' });
     }
 
-    // Se os dados forem válidos, continuar o processamento
     console.log('Evento recebido com sucesso:', { Cliente, IdCliente, IdChamado, NomeRespondeu, TelefoneRespondeu, OpcaoEscolhida });
 
     return res.status(200).json({ message: 'Evento recebido com sucesso!' });
@@ -72,7 +127,6 @@ app.post('/notificacao', (req, res) => {
 
     console.log('Notificação simples recebida:', payload);
 
-    // Processamento do payload
     if (payload.Telefones) {
         return res.status(200).json({ message: 'Notificação recebida com sucesso!' });
     } else {
@@ -98,14 +152,14 @@ app.post('/evento-resposta', (req, res) => {
     return res.status(200).json({ message: 'Resposta do evento recebida com sucesso!' });
 });
 
-// Inicia o servidor na poeta 3000
-app.listen(3000, async ()=>{
+// Inicia o servidor na porta 3000
+app.listen(3000, async () => {
     console.log('API rodando na porta 3000');
 
     try {
         const url = await ngrok.connect(3000);
         console.log(`Ngrok ativo: ${url}`);
-      } catch (error) {
+    } catch (error) {
         console.error('Erro ao iniciar o Ngrok:', error);
-      }
+    }
 });
