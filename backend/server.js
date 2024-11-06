@@ -82,27 +82,21 @@ app.post('/login', (req, res) => {
 // Endpoint para enviar mensagem no WhatsApp    
 app.post('/mensagem', (req, res) => {
     const { message, telefone } = req.body;
-
+    
     if (!message || !telefone) {
         return res.status(400).json({ error: 'Dados da notificação incompletos' });
     }
 
     const numeroComCodigo = `55${telefone}@c.us`;
 
-    // Verifica se o cliente está pronto antes de enviar a mensagem
-    if (client.readyState === 'CONNECTED') {
-        client.sendMessage(numeroComCodigo, message)
-            .then(response => {
-                console.log('Mensagem enviada com sucesso para', telefone);
-                res.status(200).json({ message: 'Mensagem enviada com sucesso!' });
-            })
-            .catch(err => {
-                console.error('Erro ao enviar mensagem:', err);
-                res.status(500).json({ error: 'Erro ao enviar mensagem' });
-            });
-    } else {
-        res.status(500).json({ error: 'Cliente WhatsApp não está pronto para enviar mensagens.' });
-    }
+    client.sendMessage(numeroComCodigo, message).then(response => {
+        console.log('Mensagem enviada com sucesso para', telefone);
+        res.status(200).json({ message: 'Mensagem enviada com sucesso!' });
+        console.log('Mensagem enviada:', message );
+    }).catch(err => {
+        console.error('Erro ao enviar mensagem:', err);
+        res.status(500).json({ error: 'Erro ao enviar mensagem' });
+    });
 });
 
 // Endpoint de eventos (payload de controle de horário)
